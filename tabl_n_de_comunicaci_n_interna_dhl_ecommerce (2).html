@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DHL eCommerce - Portal de Comunicación Interna</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dhl: {
+                            red: '#D40511',
+                            yellow: '#FFCC00',
+                            lightYellow: '#FFF9E5',
+                            softRed: '#FDF2F2',
+                            dark: '#1E1E1E',
+                            grayBg: '#F8FAFC'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-dhl-grayBg text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <!-- HEADER / BARRA SUPERIOR -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Branding DHL -->
+            <div class="flex items-center space-x-3">
+                <div class="bg-dhl-yellow px-3 py-1.5 rounded-lg flex items-center space-x-2 font-black italic text-dhl-red text-xl tracking-wider shadow-sm">
+                    <span>DHL</span>
+                    <span class="text-xs font-semibold not-italic tracking-normal text-gray-700 border-l border-red-300 pl-2">eCommerce</span>
+                </div>
+                <div class="hidden sm:block text-xs font-medium text-gray-500 border-l border-gray-300 pl-3">
+                    📦 Portal de Novedades y Procedimientos
+                </div>
+            </div>
+
+            <!-- Botón Modo Administrador / Indicador -->
+            <div class="flex items-center space-x-3">
+                <div id="adminBadge" class="hidden items-center bg-red-100 text-dhl-red text-xs font-bold px-3 py-1.5 rounded-full border border-red-200">
+                    <i class="fa-solid fa-user-shield mr-1.5"></i> Modo Editor Activo
+                </div>
+                <button id="toggleAdminBtn" onclick="toggleAdminMode()" class="flex items-center space-x-2 text-xs font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-xl transition duration-200">
+                    <i id="adminBtnIcon" class="fa-solid fa-lock"></i>
+                    <span id="adminBtnText">Acceso Editor</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <!-- PANEL LATERAL COMPACTO (DOCUMENTOS FRECUENTES) -->
+            <aside class="lg:col-span-1 space-y-4">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3 border-b border-gray-100 pb-2">
+                        <h2 class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>📁</span> Docs Frecuentes
+                        </h2>
+                        <span id="docCountBadge" class="text-[10px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">0</span>
+                    </div>
+
+                    <!-- Lista de Enlaces Compacta -->
+                    <ul class="space-y-1.5 text-xs" id="quickLinksList">
+                        <!-- Cargado dinámicamente -->
+                    </ul>
+                </div>
+            </aside>
+
+            <!-- CONTENIDO PRINCIPAL: NOTICIAS Y PANELES DE EDICIÓN -->
+            <main class="lg:col-span-3 space-y-6">
+
+                <!-- CONTENEDOR DE PANELES DE ADMINISTRACIÓN (SOLO VISIBLE EN MODO EDITOR) -->
+                <div id="adminPanelContainer" class="hidden space-y-6">
+                    
+                    <!-- FORMULARIO 1: CREAR NUEVA PUBLICACIÓN -->
+                    <div class="bg-white rounded-2xl p-6 shadow-md border-2 border-dhl-yellow relative overflow-hidden transition-all">
+                        <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+                            <h2 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                <span>✨</span> Publicar Nuevo Comunicado
+                            </h2>
+                            <span class="text-[11px] font-semibold text-dhl-red bg-red-50 px-2.5 py-1 rounded-md">Gestión de Avisos</span>
+                        </div>
+
+                        <form id="postForm" onsubmit="handleCreatePost(event)" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Título de la publicación *</label>
+                                    <input type="text" id="postTitle" required placeholder="Ej. Cambio en proceso de escaneo nocturno" 
+                                        class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-300 focus:ring-2 focus:ring-dhl-yellow focus:border-dhl-yellow outline-none transition">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Categoría *</label>
+                                    <select id="postCategory" required class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-300 focus:ring-2 focus:ring-dhl-yellow focus:border-dhl-yellow outline-none transition">
+                                        <option value="Noticias">📰 Noticias</option>
+                                        <option value="Recordatorios">⏰ Recordatorios</option>
+                                        <option value="Incidencias">⚠️ Incidencias</option>
+                                        <option value="Actualización procedimiento">📋 Actualización procedimiento</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Contenido de la publicación *</label>
+                                <textarea id="postContent" rows="3" required placeholder="Escribe aquí los detalles del comunicado..." 
+                                    class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-300 focus:ring-2 focus:ring-dhl-yellow focus:border-dhl-yellow outline-none transition"></textarea>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Fecha de caducidad (Opcional)</label>
+                                    <input type="date" id="postExpiry" 
+                                        class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-300 focus:ring-2 focus:ring-dhl-yellow focus:border-dhl-yellow outline-none transition">
+                                </div>
+
+                                <div class="flex justify-end">
+                                    <button type="submit" class="w-full md:w-auto bg-dhl-red hover:bg-red-700 text-white font-semibold px-5 py-2 rounded-xl text-xs shadow-sm hover:shadow transition duration-200 flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-paper-plane"></i>
+                                        <span>Publicar Anuncio</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- FORMULARIO 2: GESTIONAR DOCUMENTOS FRECUENTES -->
+                    <div class="bg-white rounded-2xl p-6 shadow-md border-2 border-amber-300 relative overflow-hidden transition-all">
+                        <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+                            <h2 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                <span>🔗</span> Modificar Documentos Frecuentes (Panel Lateral)
+                            </h2>
+                            <span class="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md">Gestión de Enlaces</span>
+                        </div>
+
+                        <!-- Formulario para agregar / editar doc -->
+                        <form id="docForm" onsubmit="handleSaveDoc(event)" class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                            <input type="hidden" id="docId">
+                            <div class="md:col-span-3">
+                                <input type="text" id="docEmoji" placeholder="Emoji (ej. 📖)" maxlength="4" value="📄"
+                                    class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-center focus:ring-2 focus:ring-dhl-yellow outline-none">
+                            </div>
+                            <div class="md:col-span-4">
+                                <input type="text" id="docTitle" required placeholder="Nombre del documento..." 
+                                    class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 focus:ring-2 focus:ring-dhl-yellow outline-none">
+                            </div>
+                            <div class="md:col-span-3">
+                                <input type="url" id="docUrl" required placeholder="https://enlace-documento.com" 
+                                    class="w-full px-3 py-1.5 text-xs rounded-lg border border-gray-300 focus:ring-2 focus:ring-dhl-yellow outline-none">
+                            </div>
+                            <div class="md:col-span-2 flex gap-1">
+                                <button type="submit" id="docSubmitBtn" class="w-full bg-gray-900 hover:bg-black text-white text-xs font-semibold px-2 py-1.5 rounded-lg transition">
+                                    + Añadir
+                                </button>
+                                <button type="button" id="docCancelBtn" onclick="resetDocForm()" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs px-2 py-1.5 rounded-lg transition">
+                                    ✕
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Lista editable de documentos -->
+                        <div class="max-h-48 overflow-y-auto border border-gray-100 rounded-xl divide-y divide-gray-100" id="adminDocsManagerList">
+                            <!-- Inyectado dinámicamente -->
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- FILTROS POR CATEGORÍA Y BÚSQUEDA -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <div class="flex flex-wrap gap-2 w-full md:w-auto" id="categoryFilters">
+                        <button onclick="filterPosts('all')" data-cat="all" class="cat-btn active text-xs font-semibold px-4 py-2 rounded-xl transition-all duration-200 bg-gray-900 text-white shadow-sm">
+                            Todos
+                        </button>
+                        <button onclick="filterPosts('Noticias')" data-cat="Noticias" class="cat-btn text-xs font-medium px-3.5 py-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all duration-200">
+                            📰 Noticias
+                        </button>
+                        <button onclick="filterPosts('Recordatorios')" data-cat="Recordatorios" class="cat-btn text-xs font-medium px-3.5 py-2 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all duration-200">
+                            ⏰ Recordatorios
+                        </button>
+                        <button onclick="filterPosts('Incidencias')" data-cat="Incidencias" class="cat-btn text-xs font-medium px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 transition-all duration-200">
+                            ⚠️ Incidencias
+                        </button>
+                        <button onclick="filterPosts('Actualización procedimiento')" data-cat="Actualización procedimiento" class="cat-btn text-xs font-medium px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all duration-200">
+                            📋 Actualización procedimiento
+                        </button>
+                    </div>
+
+                    <div class="relative w-full md:w-64">
+                        <input type="text" id="searchInput" oninput="renderPosts()" placeholder="Buscar comunicados..." 
+                            class="w-full pl-9 pr-4 py-1.5 text-xs rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-dhl-yellow outline-none transition">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-gray-400"></i>
+                    </div>
+                </div>
+
+                <!-- CONTENEDOR DE POSTS -->
+                <div id="postsContainer" class="space-y-4">
+                    <!-- Inyectado dinámicamente por Javascript -->
+                </div>
+
+                <!-- Estado vacío -->
+                <div id="emptyState" class="hidden bg-white rounded-2xl p-12 text-center border border-gray-100">
+                    <div class="text-4xl mb-3">📭</div>
+                    <h3 class="text-base font-bold text-gray-700">No hay publicaciones disponibles</h3>
+                    <p class="text-xs text-gray-500 mt-1">No se encontraron avisos activos en esta categoría.</p>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-gray-200 mt-12 py-6 text-center text-xs text-gray-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p>© 2026 DHL eCommerce - Tablón Informativo Operativo</p>
+            <p class="text-gray-400">Uso interno exclusivo para la plantilla</p>
+        </div>
+    </footer>
+
+    <!-- LÓGICA JAVASCRIPT -->
+    <script>
+        const ADMIN_PASSWORD = "admin123"; 
+        let isAdmin = false;
+        let activeCategory = 'all';
+
+        // Documentos por defecto
+        const defaultDocs = [
+            { id: 'd1', emoji: '📖', title: 'Manual de Procedimientos', url: 'https://example.com/manual' },
+            { id: 'd2', emoji: '📋', title: 'Protocolo de Incidencias', url: 'https://example.com/incidencias' },
+            { id: 'd3', emoji: '🚚', title: 'Cuadrantes y Turnos', url: 'https://example.com/turnos' },
+            { id: 'd4', emoji: '🎧', title: 'Directorio de Soporte', url: 'https://example.com/soporte' }
+        ];
+
+        // Publicaciones iniciales por defecto
+        const defaultPosts = [
+            {
+                id: '1',
+                title: 'Actualización en el escaneo de paquetes de gran volumen',
+                category: 'Actualización procedimiento',
+                content: 'A partir del próximo lunes, todos los bultos de categoría superior a 15kg deberán pasar por el escáner del muelle 4 antes de la asignación a ruta. Por favor, revisad la guía adjunta en los documentos útiles.',
+                date: '2026-10-25',
+                expiry: '',
+                author: 'Coordinación Operativa'
+            },
+            {
+                id: '2',
+                title: 'Mantenimiento preventivo en la cinta transportadora A2',
+                category: 'Incidencias',
+                content: 'Se realizarán tareas de mantenimiento en la cinta A2 hoy entre las 14:00h y las 15:30h. Las lecturas se desviarán temporalmente hacia la cinta A3.',
+                date: '2026-10-27',
+                expiry: '2026-10-28',
+                author: 'Mantenimiento Nave'
+            },
+            {
+                id: '3',
+                title: 'Recordatorio: Fichaje de pausas y EPIs obligatorios',
+                category: 'Recordatorios',
+                content: 'Recordamos a todo el equipo la obligatoriedad del uso de calzado de seguridad y chaleco reflectante en toda la zona de muelles. Igualmente, no olvidéis registrar las pausas en el terminal.',
+                date: '2026-10-20',
+                expiry: '',
+                author: 'Prevención de Riesgos'
+            }
+        ];
+
+        // GESTIÓN DE LOCALSTORAGE
+        function getStoredPosts() {
+            const saved = localStorage.getItem('dhl_posts');
+            if (saved) {
+                try { 
+                    let parsed = JSON.parse(saved);
+                    // Migrar categorías antiguas si existieran previamente en localStorage
+                    parsed = parsed.map(p => {
+                        if (p.category === 'Procedure' || p.category === 'procedure updates' || p.category === 'update Procedimiento') {
+                            p.category = 'Actualización procedimiento';
+                        }
+                        return p;
+                    });
+                    return parsed;
+                } catch (e) {}
+            }
+            localStorage.setItem('dhl_posts', JSON.stringify(defaultPosts));
+            return defaultPosts;
+        }
+
+        function savePosts(posts) {
+            localStorage.setItem('dhl_posts', JSON.stringify(posts));
+        }
+
+        function getStoredDocs() {
+            const saved = localStorage.getItem('dhl_docs');
+            if (saved) {
+                try { return JSON.parse(saved); } catch (e) {}
+            }
+            localStorage.setItem('dhl_docs', JSON.stringify(defaultDocs));
+            return defaultDocs;
+        }
+
+        function saveDocs(docs) {
+            localStorage.setItem('dhl_docs', JSON.stringify(docs));
+        }
+
+        // CONTROL MODO ADMINISTRADOR
+        function toggleAdminMode() {
+            if (!isAdmin) {
+                const password = prompt("Introduce la contraseña de Editor para gestionar contenido:");
+                if (password === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    updateAdminUI();
+                } else if (password !== null) {
+                    alert("Contraseña incorrecta.");
+                }
+            } else {
+                isAdmin = false;
+                updateAdminUI();
+            }
+        }
+
+        function updateAdminUI() {
+            const adminContainer = document.getElementById('adminPanelContainer');
+            const badge = document.getElementById('adminBadge');
+            const btnText = document.getElementById('adminBtnText');
+            const btnIcon = document.getElementById('adminBtnIcon');
+
+            if (isAdmin) {
+                adminContainer.classList.remove('hidden');
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+                btnText.textContent = "Salir de Editor";
+                btnIcon.className = "fa-solid fa-unlock";
+            } else {
+                adminContainer.classList.add('hidden');
+                badge.classList.add('hidden');
+                badge.classList.remove('flex');
+                btnText.textContent = "Acceso Editor";
+                btnIcon.className = "fa-solid fa-lock";
+            }
+            renderPosts();
+            renderDocs();
+        }
+
+        // CREAR PUBLICACIÓN
+        function handleCreatePost(event) {
+            event.preventDefault();
+            const title = document.getElementById('postTitle').value.trim();
+            const category = document.getElementById('postCategory').value;
+            const content = document.getElementById('postContent').value.trim();
+            const expiry = document.getElementById('postExpiry').value;
+
+            if (!title || !content) return;
+
+            const today = new Date().toISOString().split('T')[0];
+
+            const newPost = {
+                id: Date.now().toString(),
+                title,
+                category,
+                content,
+                date: today,
+                expiry: expiry || '',
+                author: 'Responsable de Turno'
+            };
+
+            const posts = getStoredPosts();
+            posts.unshift(newPost);
+            savePosts(posts);
+
+            document.getElementById('postForm').reset();
+            renderPosts();
+        }
+
+        function deletePost(id) {
+            if (confirm("¿Estás seguro de que deseas eliminar este comunicado?")) {
+                let posts = getStoredPosts();
+                posts = posts.filter(p => p.id !== id);
+                savePosts(posts);
+                renderPosts();
+            }
+        }
+
+        // GESTIÓN DE DOCUMENTOS FRECUENTES
+        function handleSaveDoc(event) {
+            event.preventDefault();
+            const id = document.getElementById('docId').value;
+            const emoji = document.getElementById('docEmoji').value.trim() || '📄';
+            const title = document.getElementById('docTitle').value.trim();
+            const url = document.getElementById('docUrl').value.trim();
+
+            if (!title || !url) return;
+
+            let docs = getStoredDocs();
+
+            if (id) {
+                // Modificar existente
+                docs = docs.map(d => d.id === id ? { id, emoji, title, url } : d);
+            } else {
+                // Crear nuevo
+                docs.push({ id: 'doc_' + Date.now(), emoji, title, url });
+            }
+
+            saveDocs(docs);
+            resetDocForm();
+            renderDocs();
+        }
+
+        function editDoc(id) {
+            const docs = getStoredDocs();
+            const doc = docs.find(d => d.id === id);
+            if (!doc) return;
+
+            document.getElementById('docId').value = doc.id;
+            document.getElementById('docEmoji').value = doc.emoji;
+            document.getElementById('docTitle').value = doc.title;
+            document.getElementById('docUrl').value = doc.url;
+
+            document.getElementById('docSubmitBtn').textContent = '✔ Guardar';
+            document.getElementById('docCancelBtn').classList.remove('hidden');
+        }
+
+        function deleteDoc(id) {
+            if (confirm("¿Deseas eliminar este acceso a documento?")) {
+                let docs = getStoredDocs();
+                docs = docs.filter(d => d.id !== id);
+                saveDocs(docs);
+                renderDocs();
+            }
+        }
+
+        function resetDocForm() {
+            document.getElementById('docForm').reset();
+            document.getElementById('docId').value = '';
+            document.getElementById('docEmoji').value = '📄';
+            document.getElementById('docSubmitBtn').textContent = '+ Añadir';
+            document.getElementById('docCancelBtn').classList.add('hidden');
+        }
+
+        // RENDERIZADO DE DOCUMENTOS FRECUENTES
+        function renderDocs() {
+            const docs = getStoredDocs();
+            const sidebarList = document.getElementById('quickLinksList');
+            const adminDocsList = document.getElementById('adminDocsManagerList');
+            const badgeCount = document.getElementById('docCountBadge');
+
+            badgeCount.textContent = docs.length;
+
+            // Render Panel Lateral
+            sidebarList.innerHTML = '';
+            if (docs.length === 0) {
+                sidebarList.innerHTML = `<li class="text-[11px] text-gray-400 italic p-2">Sin documentos guardados.</li>`;
+            } else {
+                docs.forEach(doc => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <a href="${escapeHtml(doc.url)}" target="_blank" rel="noopener noreferrer" 
+                            class="flex items-center justify-between p-2 rounded-lg hover:bg-yellow-50 text-gray-700 hover:text-dhl-red transition border border-transparent hover:border-yellow-200">
+                            <div class="flex items-center space-x-2 truncate">
+                                <span class="text-xs">${escapeHtml(doc.emoji)}</span>
+                                <span class="font-medium text-gray-700 truncate">${escapeHtml(doc.title)}</span>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-gray-400 flex-shrink-0 ml-1"></i>
+                        </a>
+                    `;
+                    sidebarList.appendChild(li);
+                });
+            }
+
+            // Render Lista en Panel Editor
+            if (adminDocsList) {
+                adminDocsList.innerHTML = '';
+                docs.forEach(doc => {
+                    const item = document.createElement('div');
+                    item.className = "flex items-center justify-between p-2 text-xs hover:bg-gray-50 transition";
+                    item.innerHTML = `
+                        <div class="flex items-center space-x-2 truncate pr-2">
+                            <span>${escapeHtml(doc.emoji)}</span>
+                            <span class="font-semibold text-gray-800">${escapeHtml(doc.title)}</span>
+                            <span class="text-gray-400 text-[10px] truncate">(${escapeHtml(doc.url)})</span>
+                        </div>
+                        <div class="flex items-center space-x-1 flex-shrink-0">
+                            <button onclick="editDoc('${doc.id}')" class="px-2 py-1 text-[11px] bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition">
+                                <i class="fa-solid fa-pen"></i> Editar
+                            </button>
+                            <button onclick="deleteDoc('${doc.id}')" class="px-2 py-1 text-[11px] bg-red-50 text-red-600 rounded hover:bg-red-100 transition">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    adminDocsList.appendChild(item);
+                });
+            }
+        }
+
+        // RENDERIZADO DE POSTS Y FILTROS
+        function filterPosts(cat) {
+            activeCategory = cat;
+            const buttons = document.querySelectorAll('.cat-btn');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('data-cat') === cat) {
+                    btn.className = "cat-btn active text-xs font-semibold px-4 py-2 rounded-xl transition-all duration-200 bg-gray-900 text-white shadow-sm";
+                } else {
+                    btn.className = "cat-btn text-xs font-medium px-3.5 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all duration-200";
+                }
+            });
+            renderPosts();
+        }
+
+        function renderPosts() {
+            const container = document.getElementById('postsContainer');
+            const emptyState = document.getElementById('emptyState');
+            const searchKeyword = document.getElementById('searchInput').value.toLowerCase();
+            
+            let posts = getStoredPosts();
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            // Filtrar posts expirados por fecha
+            posts = posts.filter(post => {
+                if (post.expiry && post.expiry < todayStr) return false;
+                return true;
+            });
+
+            if (activeCategory !== 'all') {
+                posts = posts.filter(p => p.category === activeCategory);
+            }
+
+            if (searchKeyword) {
+                posts = posts.filter(p => 
+                    p.title.toLowerCase().includes(searchKeyword) || 
+                    p.content.toLowerCase().includes(searchKeyword)
+                );
+            }
+
+            container.innerHTML = '';
+
+            if (posts.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            const catStyles = {
+                'Noticias': { badgeBg: 'bg-blue-100 text-blue-800 border-blue-200', icon: '📰', label: 'Noticias' },
+                'Recordatorios': { badgeBg: 'bg-amber-100 text-amber-800 border-amber-200', icon: '⏰', label: 'Recordatorios' },
+                'Incidencias': { badgeBg: 'bg-rose-100 text-rose-800 border-rose-200', icon: '⚠️', label: 'Incidencias' },
+                'Actualización procedimiento': { badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-200', icon: '📋', label: 'Actualización procedimiento' }
+            };
+
+            posts.forEach(post => {
+                const style = catStyles[post.category] || catStyles['Noticias'];
+                const dateParts = post.date.split('-');
+                const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : post.date;
+
+                const card = document.createElement('article');
+                card.className = "bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition duration-200 flex flex-col justify-between relative group";
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${style.badgeBg}">
+                                <span>${style.icon}</span>
+                                <span>${style.label}</span>
+                            </span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] font-medium text-gray-400 flex items-center gap-1">
+                                    <i class="fa-regular fa-calendar text-[10px]"></i> ${formattedDate}
+                                </span>
+                                ${isAdmin ? `
+                                    <button onclick="deletePost('${post.id}')" title="Eliminar publicación" 
+                                        class="text-gray-400 hover:text-dhl-red p-1 rounded-md hover:bg-red-50 transition text-xs">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <h3 class="text-base font-bold text-gray-800 mb-2 leading-snug">
+                            ${escapeHtml(post.title)}
+                        </h3>
+
+                        <p class="text-xs text-gray-600 leading-relaxed whitespace-pre-line mb-4">
+                            ${escapeHtml(post.content)}
+                        </p>
+                    </div>
+
+                    <div class="pt-3 border-t border-gray-50 flex items-center justify-between text-[11px] text-gray-400">
+                        <span class="font-medium text-gray-500">✍️ ${escapeHtml(post.author || 'Equipo DHL')}</span>
+                        ${post.expiry ? `
+                            <span class="text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">
+                                ⏳ Expira: ${post.expiry.split('-').reverse().join('/')}
+                            </span>
+                        ` : ''}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        window.onload = function() {
+            renderDocs();
+            renderPosts();
+        };
+    </script>
+</body>
+</html>
